@@ -1,0 +1,26 @@
+[
+  {
+    "id": "doc-001",
+    "name": "Q3_Budget_Allocation.pdf",
+    "type": "pdf",
+    "description": "Q3 2025 Budget Allocation (Confidential)",
+    "watermark_text": "DECOY-{{session_id}}-{{attacker_ip}}-{{timestamp}}",
+    "size_kb": 1240
+  },
+  {
+    "id": "doc-002",
+    "name": "Salary_Structure_2025.pdf",
+    "type": "pdf",
+    "description": "Revised Public Sector Salary Bands",
+    "watermark_text": "TRACKED-{{session_id}}-{{username}}-{{timestamp}}",
+    "size_kb": 890
+  },
+  {
+    "id": "doc-003",
+    "name": "Donor_Funds_Tracking.xlsx",
+    "type": "xlsx",
+    "description": "USAID & World Bank Funds Utilization Q1–Q3",
+    "watermark_text": "CERBERUS-INTEL-{{session_id}}",
+    "size_kb": 560
+  }
+]
