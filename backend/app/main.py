@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api import phishing, authentication, bec 
 
+
 app = FastAPI( title = "Cerberus Defense Suite MVP")
 
 @app.get("/")

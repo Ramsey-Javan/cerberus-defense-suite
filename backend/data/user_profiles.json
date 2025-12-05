@@ -1,0 +1,26 @@
+{
+  "admin": {
+    "full_name": "System Administrator",
+    "trusted_ips": ["192.168.1.10", "203.91.45.112", "41.80.123.45"],
+    "trusted_hours": [7, 18],
+    "timezone": "Africa/Nairobi",
+    "department": "ICT",
+    "last_login": "2025-11-27T14:30:00+03:00"
+  },
+  "finance_director": {
+    "full_name": "Jane Mwangi",
+    "trusted_ips": ["10.0.5.22", "10.0.5.23"],
+    "trusted_hours": [8, 17],
+    "timezone": "Africa/Nairobi",
+    "department": "Finance",
+    "last_login": "2025-11-27T09:15:00+03:00"
+  },
+  "procurement_officer": {
+    "full_name": "David Otieno",
+    "trusted_ips": ["10.0.8.101"],
+    "trusted_hours": [8, 16],
+    "timezone": "Africa/Nairobi",
+    "department": "Procurement",
+    "last_login": "2025-11-26T11:20:00+03:00"
+  }
+}

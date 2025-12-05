@@ -1,17 +1,3 @@
-# Bytecode
 __pycache__/
 *.pyc
-*.pyo
-
-# Data (DB is volatile/test-only)
-/backend/data/decoy_sessions.db
-
-# Env
-.env
-.venv/
-venv/
-
-# IDE
-.vscode/
-.idea/
-EOFca
+backend/data/decoy_sessions.db

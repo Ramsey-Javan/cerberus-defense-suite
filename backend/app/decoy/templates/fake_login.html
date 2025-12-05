@@ -1,13 +1,85 @@
-<html>
-    <head>
-        <title>huduma services kenya</title>
-    </head>
-    <body>
-        <h1>Login to huduma services kenya</h1>
-        <form>
-            <input placeholder="Username">
-            <input placeholder="Password" type="password">
-            <button type="submit">Login</button>
+<!-- fake_login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ministry of Finance - Staff Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; }
+        .container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo img { height: 60px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background: #1a56db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1642b0; }
+        .footer { text-align: center; font-size: 0.8em; color: #666; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMjAiIHI9IjEyMCIgZmlsbD0iIzE2NDBmMSIvPjx0ZXh0IHg9IjEyMCIgeT0iMTI1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzAiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk1PRjwvdGV4dD48L3N2Zz4=" alt="MoF">
+        </div>
+        <h2>Staff Login</h2>
+        <form id="loginForm">
+            <input type="text" id="username" name="username" placeholder="Staff ID (e.g., S123456)" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <button type="submit">Sign In</button>
         </form>
-    </body>
+        <div class="footer">
+            © 2025 Ministry of Finance, Republic of Kenya<br>
+            <small>This system is for authorized personnel only.</small>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        // Capture timing (simple version)
+        const t0 = performance.now();
+        // Simulate typing delay (in real app: record per-keystroke)
+        // For MVP demo: assume paste if very fast
+        const usernameDuration = Math.random() * 100 + 50; // 50–150ms → likely typed
+        const passwordDuration = 80; // fixed fast → paste
+
+        const biometrics = {
+            username_duration_ms: usernameDuration,
+            password_duration_ms: passwordDuration,
+            username_len: username.length,
+            password_len: password.length,
+            password_pasted: passwordDuration < 100  // heuristic
+        };
+
+        const payload = {
+            username: username,
+            password: password,
+            client_ip: "{{ attacker_ip }}",  // injected server-side
+            login_time: new Date().toISOString(),
+            biometrics: biometrics,
+            user_agent: navigator.userAgent
+        };
+
+        const res = await fetch("/auth/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.action === "trap" && data.session_id) {
+            window.location.href = `/decoy/${data.session_id}/login`;
+        } else if (data.action === "allow") {
+            alert("✅ " + data.message);
+        } else {
+            alert("⚠️ " + data.message);
+        }
+    });
+    </script>
+</body>
 </html>
+

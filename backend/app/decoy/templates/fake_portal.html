@@ -1,14 +1,57 @@
+
+<!DOCTYPE html>
 <html>
+<head>
+    <title>MoF Staff Portal - Dashboard</title>
+    <style>
+        body { font-family: Arial; margin: 0; background: #f5f7fa; }
+        header { background: #1640f1; color: white; padding: 15px 20px; }
+        nav { width: 200px; position: fixed; top: 56px; height: calc(100vh - 56px); background: #2d3748; color: white; }
+        nav a { display: block; padding: 12px 20px; color: #cbd5e0; text-decoration: none; }
+        nav a:hover { background: #4a5568; }
+        main { margin-left: 200px; padding: 20px; }
+        .card { background: white; padding: 20px; margin: 10px 0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .file { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .file:hover { background: #f0f4ff; }
+    </style>
+</head>
 <body>
-    <head>
-        <title>huduma services kenya</title>
-    </head>
-    <body>
-        <h1>Welcome admin panel</h1>
-        <form>
-            <input placeholder="Email">
-            <input placeholder="Password" type="password">
-            <button type="submit">Submit</button>
-        </form>
-    </body>
+    <header>
+        <h2>Ministry of Finance • Staff Portal</h2>
+    </header>
+    <nav>
+        <a href="#">Dashboard</a>
+        <a href="#">Inbox</a>
+        <a href="#">Finance Reports</a>
+        <a href="#">HR Portal</a>
+        <a href="#">Logout</a>
+    </nav>
+    <main>
+        <h1>Welcome, {{ username }}!</h1>
+        <div class="card">
+            <h3>Recent Documents</h3>
+            <div class="file" onclick="downloadDoc('Q3_Budget_Allocation.pdf')">Q3 Budget Allocation (Confidential)</div>
+            <div class="file" onclick="downloadDoc('Salary_Structure_2025.pdf')">Revised Salary Structure 2025</div>
+            <div class="file" onclick="downloadDoc('Donor_Funds_Tracking.xlsx')">Donor Funds Tracking Sheet</div>
+        </div>
+    </main>
+
+    <script>
+        const sessionId = "{{ session_id }}";
+        async function logPage(page) {
+            await fetch("/phishing/visit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sessionId, page: page })
+            });
+        }
+        async function downloadDoc(filename) {
+            logPage("/download/" + filename);
+            // Instead of real download, show watermark notice
+            alert("⚠️ Watermarked copy downloaded.\\nFile: " + filename + "\\nSession ID: " + sessionId);
+        }
+        // Log portal visit
+        logPage("/portal");
+    </script>
+</body>
 </html>
