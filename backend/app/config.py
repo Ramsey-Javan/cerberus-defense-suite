@@ -6,6 +6,6 @@ load_dotenv()
 class Settings:
     ENV = os.getenv("ENV", "development")
     AI_MODEL_PATH = "models"
-    DECOY_TEMPLATE = "app/decoy/template"
+    DECOY_TEMPLATE = "app/decoy/templates"
 
 settings = Settings()

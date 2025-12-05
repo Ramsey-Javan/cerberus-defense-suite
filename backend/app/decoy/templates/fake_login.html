@@ -34,29 +34,52 @@
     </div>
 
     <script>
-        const sessionId = "{{ session_id }}"; // Injected by FastAPI
-        document.getElementById("loginForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
 
-            // Send credentials to /phishing/capture
-            await fetch("/phishing/capture", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    username: username,
-                    password: password,
-                    page: "/login"
-                })
-            });
+        // Capture timing (simple version)
+        const t0 = performance.now();
+        // Simulate typing delay (in real app: record per-keystroke)
+        // For MVP demo: assume paste if very fast
+        const usernameDuration = Math.random() * 100 + 50; // 50–150ms → likely typed
+        const passwordDuration = 80; // fixed fast → paste
 
-            // Redirect to fake portal (after "processing")
-            setTimeout(() => {
-                window.location.href = `/decoy/${sessionId}/portal`;
-            }, 1500);
+        const biometrics = {
+            username_duration_ms: usernameDuration,
+            password_duration_ms: passwordDuration,
+            username_len: username.length,
+            password_len: password.length,
+            password_pasted: passwordDuration < 100  // heuristic
+        };
+
+        const payload = {
+            username: username,
+            password: password,
+            client_ip: "{{ attacker_ip }}",  // injected server-side
+            login_time: new Date().toISOString(),
+            biometrics: biometrics,
+            user_agent: navigator.userAgent
+        };
+
+        const res = await fetch("/auth/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
         });
+
+        const data = await res.json();
+        if (data.action === "trap" && data.session_id) {
+            window.location.href = `/decoy/${data.session_id}/login`;
+        } else if (data.action === "allow") {
+            alert("✅ " + data.message);
+        } else {
+            alert("⚠️ " + data.message);
+        }
+    });
     </script>
 </body>
 </html>
+

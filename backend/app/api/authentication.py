@@ -1,4 +1,3 @@
-# backend/app/api/authentication.py
 from fastapi import APIRouter, HTTPException
 from ..sentinel.biometrics import analyze_biometrics
 from ..sentinel.anomaly import analyze_context
@@ -19,13 +18,13 @@ async def credential_login(payload: dict):
     if not username or not password:
         raise HTTPException(400, "Username and password required")
 
-    # ✅ Step 1: Biometric analysis
+    #  Biometric analysis
     bio_result = analyze_biometrics(biometrics)
 
-    # ✅ Step 2: Contextual analysis
+    # Contextual analysis
     context_result = analyze_context(username, client_ip, login_time)
 
-    # ✅ Step 3: Combine risk
+    #  Combine risk
     total_risk = bio_result["biometric_risk"] + context_result["context_risk"]
     
     if total_risk >= 70:
@@ -61,3 +60,4 @@ async def credential_login(payload: dict):
         "session_id": session_id,
         "message": message
     }
+    

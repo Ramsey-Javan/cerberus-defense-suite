@@ -1,22 +1,37 @@
-
 def analyze_biometrics(bio: dict) -> dict:
     """
-    Returns biometric risk flags.
-    """
-    flags = {
-        "username_pasted": bio.get("username_pasted", False),
-        "password_pasted": bio.get("password_pasted", False),
-        "username_speed_low": bio.get("username_duration_ms", 0) > 5000,  # >5s → bot?
-        "password_speed_high": bio.get("password_duration_ms", 0) < 200,  # <200ms → paste/autofill
+    Analyzes biometric signals from frontend.
+    Input: {
+        "username_duration_ms": 1200,
+        "password_duration_ms": 80,
+        "username_len": 6,
+        "password_len": 10,
+        "password_pasted": true   # optional — computed frontend or here
     }
+    """
+    # Compute paste heuristic if not provided
+    password_pasted = bio.get("password_pasted")
+    if password_pasted is None:
+        duration = bio.get("password_duration_ms", 0)
+        length = bio.get("password_len", 1)
+        # < 50ms/char → likely paste/autofill
+        password_pasted = duration > 0 and (duration / length) < 50
 
-    risk_score = 0
-    if flags["username_pasted"]: risk_score += 30
-    if flags["password_pasted"]: risk_score += 50
-    if flags["password_speed_high"]: risk_score += 20
+    username_pasted = bio.get("username_pasted", False)
+
+    # Risk scoring
+    risk = 0
+    if password_pasted:
+        risk += 50  # High: credential stuffing
+    if username_pasted:
+        risk += 30
 
     return {
-        "flags": flags,
-        "biometric_risk": risk_score,
-        "biometric_verdict": "high" if risk_score >= 50 else "medium" if risk_score >= 20 else "low"
+        "flags": {
+            "password_pasted": password_pasted,
+            "username_pasted": username_pasted
+        },
+        "biometric_risk": risk,
+        "verdict": "high" if risk >= 50 else "medium" if risk >= 30 else "low"
     }
+
