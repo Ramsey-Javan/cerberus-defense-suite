@@ -1,57 +1,283 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MoF Staff Portal - Dashboard</title>
     <style>
-        body { font-family: Arial; margin: 0; background: #f5f7fa; }
-        header { background: #1640f1; color: white; padding: 15px 20px; }
-        nav { width: 200px; position: fixed; top: 56px; height: calc(100vh - 56px); background: #2d3748; color: white; }
-        nav a { display: block; padding: 12px 20px; color: #cbd5e0; text-decoration: none; }
-        nav a:hover { background: #4a5568; }
-        main { margin-left: 200px; padding: 20px; }
-        .card { background: white; padding: 20px; margin: 10px 0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .file { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .file:hover { background: #f0f4ff; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            height: 100vh;
+        }
+
+        header {
+            background: #1640f1;
+            color: white;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        nav {
+            width: 200px;
+            position: fixed;
+            top: 56px;
+            left: 0;
+            height: calc(100vh - 56px);
+            background: #2d3748;
+            color: white;
+            overflow-y: auto;
+        }
+
+        nav a {
+            display: block;
+            padding: 12px 20px;
+            color: #cbd5e0;
+            text-decoration: none;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        nav a:hover {
+            background: #4a5568;
+            border-left-color: #1640f1;
+        }
+
+        main {
+            margin-left: 200px;
+            margin-top: 56px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .file {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file:last-child {
+            border-bottom: none;
+        }
+
+        .file:hover {
+            background: #f0f4ff;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #1a202c;
+        }
+
+        .file-icon {
+            color: #718096;
+            margin-right: 10px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #e6f3ff;
+            color: #1a56db;
+            border-left: 4px solid #1a56db;
+        }
+
+        .alert-warning {
+            background: #fff5e6;
+            color: #d97706;
+            border-left: 4px solid #d97706;
+        }
     </style>
 </head>
 <body>
     <header>
-        <h2>Ministry of Finance • Staff Portal</h2>
+        <h2>🏛️ Ministry of Finance • Staff Portal</h2>
     </header>
-    <nav>
-        <a href="#">Dashboard</a>
-        <a href="#">Inbox</a>
-        <a href="#">Finance Reports</a>
-        <a href="#">HR Portal</a>
-        <a href="#">Logout</a>
+
+    <nav role="navigation" aria-label="Main navigation">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#inbox">Inbox</a>
+        <a href="#finance-reports">Finance Reports</a>
+        <a href="#hr-portal">HR Portal</a>
+        <a href="#settings">Settings</a>
+        <a href="#logout" onclick="logout()">Logout</a>
     </nav>
-    <main>
-        <h1>Welcome, {{ username }}!</h1>
+
+    <main role="main">
+        <h1>Welcome, <span id="welcome-username">User</span>!</h1>
+
+        <div class="alert alert-info">
+            <strong>ℹ️ Notification:</strong> Your session is monitored for security purposes.
+        </div>
+
         <div class="card">
-            <h3>Recent Documents</h3>
-            <div class="file" onclick="downloadDoc('Q3_Budget_Allocation.pdf')">Q3 Budget Allocation (Confidential)</div>
-            <div class="file" onclick="downloadDoc('Salary_Structure_2025.pdf')">Revised Salary Structure 2025</div>
-            <div class="file" onclick="downloadDoc('Donor_Funds_Tracking.xlsx')">Donor Funds Tracking Sheet</div>
+            <h3>📄 Recent Documents</h3>
+            <div class="file" onclick="downloadDoc('Q3_Budget_Allocation.pdf', 'Confidential')">
+                <div>
+                    <span class="file-icon">📊</span>
+                    <span class="file-name">Q3 Budget Allocation</span>
+                </div>
+                <span style="color: #dc3545; font-size: 12px;">CONFIDENTIAL</span>
+            </div>
+            <div class="file" onclick="downloadDoc('Salary_Structure_2025.pdf', 'Internal Use Only')">
+                <div>
+                    <span class="file-icon">📋</span>
+                    <span class="file-name">Revised Salary Structure 2025</span>
+                </div>
+                <span style="color: #ff9800; font-size: 12px;">INTERNAL</span>
+            </div>
+            <div class="file" onclick="downloadDoc('Donor_Funds_Tracking.xlsx', 'Confidential')">
+                <div>
+                    <span class="file-icon">💰</span>
+                    <span class="file-name">Donor Funds Tracking Sheet</span>
+                </div>
+                <span style="color: #dc3545; font-size: 12px;">CONFIDENTIAL</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📊 System Status</h3>
+            <div class="alert alert-warning">
+                <strong>⚠️ Security Notice:</strong> Unusual login detected. Please verify your account activity.
+            </div>
         </div>
     </main>
 
     <script>
         const sessionId = "{{ session_id }}";
+        const username = "{{ username }}";
+
+        // Sanitize username to prevent XSS
+        document.getElementById("welcome-username").textContent = username || "User";
+
+        // Log page visit on load
         async function logPage(page) {
-            await fetch("/phishing/visit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_id: sessionId, page: page })
-            });
+            try {
+                const response = await fetch("/phishing/visit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        page: page,
+                        timestamp: new Date().toISOString(),
+                        user_agent: navigator.userAgent
+                    })
+                });
+
+                if (!response.ok) {
+                    console.warn(`Failed to log page visit: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("Error logging page visit:", error);
+            }
         }
-        async function downloadDoc(filename) {
-            logPage("/download/" + filename);
-            // Instead of real download, show watermark notice
-            alert("⚠️ Watermarked copy downloaded.\\nFile: " + filename + "\\nSession ID: " + sessionId);
+
+        // Log document download with metadata
+        async function downloadDoc(filename, classification) {
+            try {
+                const response = await fetch("/phishing/download", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        filename: filename,
+                        classification: classification,
+                        timestamp: new Date().toISOString(),
+                        user_agent: navigator.userAgent,
+                        client_ip: "{{ attacker_ip }}"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Show watermark alert
+                alert("⚠️ WATERMARKED COPY DOWNLOADED\n\n" +
+                      "File: " + filename + "\n" +
+                      "Classification: " + classification + "\n" +
+                      "Session: " + sessionId + "\n\n" +
+                      "This file contains tracking information.");
+
+            } catch (error) {
+                console.error("Error logging download:", error);
+                alert("⚠️ Download initiated but security logging failed.");
+            }
         }
-        // Log portal visit
+
+        // Logout handler
+        function logout() {
+            logPage("/logout");
+            setTimeout(() => {
+                window.location.href = "/auth/logout";
+            }, 500);
+        }
+
+        // Log initial portal visit
         logPage("/portal");
+
+        // Log activity every 30 seconds
+        setInterval(() => {
+            logPage("/heartbeat");
+        }, 30000);
     </script>
 </body>
 </html>

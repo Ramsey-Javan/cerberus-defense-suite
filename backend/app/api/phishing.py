@@ -1,6 +1,6 @@
-# backend/app/api/phishing.py
 from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from ..utils.report import generate_attacker_report
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import json
@@ -94,3 +94,12 @@ async def fake_portal_page(request: Request, session_id: str):
             "documents": FAKE_DOCS  
         }
     )
+
+@router.get("/{session_id}/report", response_class=FileResponse)
+async def get_phishing_report(session_id: str):
+    session = engine.get_decoy_session(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+
+    report_path = generate_attacker_report(session)
+    return FileResponse(report_path, media_type="application/pdf", filename=f"phishing_report_{session_id}.pdf")    
