@@ -95,7 +95,7 @@ async def fake_portal_page(request: Request, session_id: str):
         }
     )
 
-@router.get("/{session_id}/report", response_class=FileResponse)
+@router.get("/{session_id}/reports", response_class=FileResponse)
 async def get_phishing_report(session_id: str):
     session = engine.get_decoy_session(session_id)
     if not session:
