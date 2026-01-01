@@ -1,0 +1,15 @@
+# Lightweight dev image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install deps first (cache layer)
+COPY package*.json ./
+# RUN npm ci
+
+# Mount source at runtime (via volume in compose)
+COPY . .
+RUN npm install --offline --no-package-lock
+
+# Start dev server
+CMD ["npm", "start"]
