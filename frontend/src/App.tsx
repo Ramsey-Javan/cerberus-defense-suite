@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Routes, Route } from 'react-router-dom';
 import DecoyPage from './pages/DecoyPage';
 import Dashboard from './pages/Dashboard';
