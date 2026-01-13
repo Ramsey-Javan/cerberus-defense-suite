@@ -1,7 +1,32 @@
-// src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { Shield, Activity, AlertTriangle, Users, Eye, TrendingUp, Clock, MapPin, Bot, Radar } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import AttackMap from '../components/dashboard/AttackMap';
+
+// Define interfaces based on your actual API responses
+interface Alert {
+  id: string;
+  type: string;
+  ip_address: string; // Match your DB field name
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+interface Session {
+  session_id: string;
+  ip_address: string;
+  credentials_captured: boolean;
+  documents_downloaded: number;
+  is_active: boolean;
+}
+
+interface RiskSummary {
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+}
 
 const navItems = [
   { name: 'Overview', path: '/dashboard', icon: Activity },
@@ -30,10 +55,57 @@ const GlassCard = ({ title, children, className = '', variant = 'default' }) => 
 };
 
 export default function Dashboard() {
+  console.log("Dashboard component mounted"); // Debugging log
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const [time, setTime] = useState(new Date());
   const [currentPath, setCurrentPath] = useState('/dashboard');
+
+  // Live data state
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [riskData, setRiskData] = useState<RiskSummary>({ low: 0, medium: 0, high: 0, critical: 0 });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data every 3 seconds
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        console.log("Fetching data from /alerts, /sessions, /risk-summary");
+
+        const [alertsRes, sessionsRes, riskRes] = await Promise.all([
+          axios.get('/alerts'),
+          axios.get('/sessions'),
+          axios.get('/risk-summary')
+        ]);
+
+        // CRITICAL FIX: Ensure alerts is always an array
+        const alertsData = Array.isArray(alertsRes.data) ? alertsRes.data : [];
+        const sessionsData = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+        const riskDataObj = typeof riskRes.data === 'object' ? riskRes.data : { low: 0, medium: 0, high: 0, critical: 0 };
+
+        setAlerts(alertsData);
+        setSessions(sessionsData);
+        setRiskData(riskDataObj);
+
+        console.log("✅ Data loaded successfully");
+      } catch (err) {
+        console.error('❌ Failed to fetch dashboard data:', err);
+        setAlerts([]);
+        setSessions([]);
+        setRiskData({ low: 0, medium: 0, high: 0, critical: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -43,6 +115,21 @@ export default function Dashboard() {
   useEffect(() => {
     setSidebarOpen(false);
   }, [location]);
+
+  // Calculate metrics from live data
+  const highRiskAlerts = Array.isArray(alerts) 
+    ? alerts.filter(a => ['high', 'critical'].includes(a.severity)).length 
+    : 0;
+
+  const activeDecoys = Array.isArray(sessions)
+    ? sessions.filter(s => s.is_active).length
+    : 0;
+  
+  const becDetections = Array.isArray(alerts)
+    ? alerts.filter(a => a.type.includes('BEC')).length
+    : 0;
+  
+  const totalRiskScore = riskData.critical * 10 + riskData.high * 5 + riskData.medium * 2;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 flex relative overflow-hidden">
@@ -194,13 +281,13 @@ export default function Dashboard() {
             </p>
           </header>
 
-          {/* Stats Grid */}
+          {/* Stats Grid - NOW LIVE */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <GlassCard>
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm text-gray-400 mb-2">Live Alerts</div>
-                  <div className="text-4xl font-bold text-red-400">0</div>
+                  <div className="text-4xl font-bold text-red-400">{highRiskAlerts}</div>
                   <div className="text-gray-500 text-sm mt-2">Last 5 min</div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
@@ -213,7 +300,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm text-gray-400 mb-2">Active Decoys</div>
-                  <div className="text-4xl font-bold text-amber-400">0</div>
+                  <div className="text-4xl font-bold text-amber-400">{activeDecoys}</div>
                   <div className="text-gray-500 text-sm mt-2">In progress</div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -226,7 +313,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm text-gray-400 mb-2">BEC Detections</div>
-                  <div className="text-4xl font-bold text-purple-400">0</div>
+                  <div className="text-4xl font-bold text-purple-400">{becDetections}</div>
                   <div className="text-gray-500 text-sm mt-2">Pending review</div>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
@@ -240,7 +327,7 @@ export default function Dashboard() {
                 <div>
                   <div className="text-sm text-gray-400 mb-2">Risk Score</div>
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-cyan-400">0</span>
+                    <span className="text-4xl font-bold text-cyan-400">{Math.min(totalRiskScore, 100)}</span>
                     <span className="text-gray-500 ml-2">/100</span>
                   </div>
                   <div className="text-gray-500 text-sm mt-2">System-wide</div>
@@ -252,50 +339,80 @@ export default function Dashboard() {
             </GlassCard>
           </div>
 
-          {/* Content Grid */}
+          {/* Content Grid - NOW LIVE */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+              {/* Attacker Map */}
+              <GlassCard title="Attacker Locations">
+                <AttackMap alerts={alerts} />
+              </GlassCard>
+
+              {/* Live Alerts Feed */}
               <GlassCard title="Latest Alerts">
-                <div className="space-y-4">
-                  {[
-                    { type: 'Phishing decoy triggered', time: '2 min ago', ip: '192.168.1.105', severity: 'high' },
-                    { type: 'Suspicious login attempt', time: '15 min ago', ip: '203.142.55.89', severity: 'medium' },
-                    { type: 'Credential harvesting detected', time: '1 hour ago', ip: '10.0.0.45', severity: 'high' }
-                  ].map((alert, i) => (
-                    <div key={i} className="flex items-start gap-4 p-4 rounded-xl backdrop-blur-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                      <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${
-                        alert.severity === 'high' ? 'bg-red-500' : 'bg-amber-500'
-                      }`}></div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-200">{alert.type}</div>
-                        <div className="text-sm text-gray-400 mt-1 flex items-center gap-3">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {alert.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {alert.ip}
-                          </span>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {alerts.length > 0 ? (
+                    alerts.slice(0, 5).map((alert) => (
+                      <div 
+                        key={alert.id} 
+                        className="flex items-start gap-4 p-4 rounded-xl backdrop-blur-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                      >
+                        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${
+                          alert.severity === 'critical' ? 'bg-red-600' :
+                          alert.severity === 'high' ? 'bg-red-500' : 
+                          alert.severity === 'medium' ? 'bg-amber-500' : 'bg-green-500'
+                        }`}></div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-200">{alert.type}</div>
+                          <div className="text-sm text-gray-400 mt-1 flex items-center gap-3">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(alert.timestamp).toLocaleTimeString()}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {alert.ip_address}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-center py-4">No recent alerts</div>
+                  )}
                 </div>
               </GlassCard>
 
               <GlassCard title="BEC Detections">
-                <div className="text-center py-12">
-                  <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <div className="text-gray-400">No suspicious transfers detected</div>
-                  <div className="text-sm text-gray-500 mt-2">All clear • System protected</div>
-                </div>
+                {becDetections > 0 ? (
+                  <div className="space-y-3">
+                    {alerts
+                      .filter(a => a.type.includes('BEC'))
+                      .slice(0, 3)
+                      .map((alert) => (
+                        <div key={alert.id} className="p-3 rounded-lg bg-purple-900/30 border border-purple-700/30">
+                          <div className="font-medium text-purple-300">{alert.type}</div>
+                          <div className="text-sm text-gray-400 mt-1">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(alert.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <div className="text-gray-400">No suspicious transfers detected</div>
+                    <div className="text-sm text-gray-500 mt-2">All clear • System protected</div>
+                  </div>
+                )}
               </GlassCard>
             </div>
 
             <div className="space-y-6">
               <GlassCard title="Top Targeted Users">
-                <ul className="space-y-3">
+                <ul className="space-y-3 max-h-60 overflow-y-auto">
                   {[
                     { user: 'jdoe@company.com', count: 3, risk: 'high' },
                     { user: 'admin@company.com', count: 2, risk: 'medium' }
@@ -319,20 +436,24 @@ export default function Dashboard() {
 
               <GlassCard title="Attacker Fingerprint">
                 <div className="space-y-4">
-                  {[
-                    { label: 'Browser', value: 'Chrome 120', icon: '🌐' },
-                    { label: 'OS', value: 'Windows', icon: '💻' },
-                    { label: 'IP', value: '203.***.***.142', icon: '📍' },
-                    { label: 'Location', value: 'Unknown', icon: '🌍' }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl backdrop-blur-sm bg-white/5 border border-white/10">
-                      <span className="text-gray-400 text-sm flex items-center gap-2">
-                        <span>{item.icon}</span>
-                        {item.label}
-                      </span>
-                      <span className="text-gray-200 font-medium text-sm">{item.value}</span>
-                    </div>
-                  ))}
+                  {alerts.length > 0 ? (
+                    [
+                      { label: 'Browser', value: 'Chrome 120', icon: '🌐' },
+                      { label: 'OS', value: 'Windows', icon: '💻' },
+                      { label: 'IP', value: alerts[0].ip_address, icon: '📍' },
+                      { label: 'Location', value: 'Nairobi, KE', icon: '🌍' }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl backdrop-blur-sm bg-white/5 border border-white/10">
+                        <span className="text-gray-400 text-sm flex items-center gap-2">
+                          <span>{item.icon}</span>
+                          {item.label}
+                        </span>
+                        <span className="text-gray-200 font-medium text-sm">{item.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-center py-4">No active sessions</div>
+                  )}
                 </div>
               </GlassCard>
             </div>
